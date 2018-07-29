@@ -59,8 +59,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             {
                 if (surfaceHolder.getSurface().isValid())
                 {
-                    // lock canvas
+
+                    // get canvas, CPU
                     canvas = surfaceHolder.lockCanvas();
+
+                    // get canvas, give me GPU, API 23+
+                    //canvas = surfaceHolder.getSurface().lockHardwareCanvas();
 
                     if (canvas != null) {
 
@@ -85,12 +89,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
             {
                 if (canvas != null)
 
+                    // CPU
                     surfaceHolder.unlockCanvasAndPost(canvas);
+                    // GPU
+                    //surfaceHolder.getSurface().unlockCanvasAndPost(canvas);
             }
 
             try
             {
-                Thread.sleep(20);
+                Thread.sleep(1);
             } catch (Exception e)
             {
                 e.printStackTrace();
