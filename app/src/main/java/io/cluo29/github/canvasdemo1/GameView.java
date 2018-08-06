@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -27,7 +28,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     private Thread gameThread = null;
 
     // thread control flag
-    private boolean gameThreadRunning = true;
+    volatile boolean gameThreadRunning = false;
 
     // screen size
     private int screenWidth;
@@ -51,7 +52,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     @Override
     public void run()
     {
-        // every 20ms refresh UI, 50Hz
+
+        gameThreadRunning = true;
+
         while (gameThreadRunning)
         {
             // draw graphics
@@ -61,10 +64,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
                 {
 
                     // get canvas, CPU
-                    canvas = surfaceHolder.lockCanvas();
+                    //canvas = surfaceHolder.lockCanvas();
 
                     // get canvas, give me GPU, API 23+
-                    //canvas = surfaceHolder.getSurface().lockHardwareCanvas();
+                    canvas = surfaceHolder.getSurface().lockHardwareCanvas();
 
                     if (canvas != null) {
 
@@ -90,17 +93,36 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
                 if (canvas != null)
 
                     // CPU
-                    surfaceHolder.unlockCanvasAndPost(canvas);
+                    //surfaceHolder.unlockCanvasAndPost(canvas);
                     // GPU
-                    //surfaceHolder.getSurface().unlockCanvasAndPost(canvas);
+                    surfaceHolder.getSurface().unlockCanvasAndPost(canvas);
+            }
+
+
+            if(Thread.currentThread().isInterrupted()){
+                gameThreadRunning = false;
+
+                Log.d("haha","quit when not blocked");
+
+
+                return;
             }
 
             try
             {
-                Thread.sleep(1);
+                Thread.sleep(10);
             } catch (Exception e)
             {
                 e.printStackTrace();
+
+
+                Log.d("haha","quit when blocked");
+
+
+                gameThreadRunning = false;
+
+
+                return;
             }
         }
     }
@@ -140,41 +162,35 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback, Run
     public void surfaceDestroyed(SurfaceHolder holder)
     {
         // surfaceDestroyed, try to stop game
+
+
+        Log.d("haha","interrupt game thread");
+
+
+
+        gameThread.interrupt();
+
+
         gameThreadRunning = false;
 
-        boolean retry = true;
 
-        // wait for thread to quit
 
-        while (retry) {
-            try {
+        // wait for game thread to quit
 
-                gameThread.join();
+        try {
 
-                retry = false;
-            } catch (InterruptedException e) {
+            gameThread.join();
 
-            }
+        } catch (InterruptedException e) {
+
         }
 
 
-        // let thread sleep for 500ms
+        Log.d("haha","quit UI");
 
-        /*
-        try
-        {
-            //gameThread.join();
-            //Thread.sleep(500);
-        } catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
-        @Override
-    protected void onDraw(Canvas canvas) {
-        //Draw the Background
-        canvas.drawColor(Color.BLUE);
-    }
-        */
+
+
+
     }
 
 
